@@ -5,10 +5,64 @@
 import random
 from collections import defaultdict
 from colorama import Fore, Back, Style
+import os
 
-class WordleGame():
+
+class GameRender():
+    def __init__(self):
+        self.yellow = Fore.YELLOW
+        self.green = Fore.GREEN
+        self.white = Fore.WHITE
+        self.words_to_render = []
+        self.history = ''
+
+    def decode_color(self, labeled_letter):
+        if labeled_letter['color'] == 'y':
+            return self.yellow
+        elif labeled_letter['color'] == 'g':
+            return self.green
+        elif labeled_letter['color'] == 'w':
+            return self.white
+
+    def prepare_word_for_render(self, labeled_letter):
+        return self.decode_color(labeled_letter) + labeled_letter["letter"] + " "
+
+    def add_letter_to_render(self, labeled_letter):
+        letter_to_render = self.prepare_word_for_render(
+            labeled_letter)  # here string with color of one letter
+        self.words_to_render.append(letter_to_render)
+
+    def clear_screen(self):
+        os.system('clear')
+
+    def render_word(self):
+        for letter in self.words_to_render:
+            self.history+=letter+" "
+        self.history+='\n'
+        self.clear_words_to_render()
+
+    def clear_words_to_render(self):
+        self.words_to_render = []
+    def print_history(self):
+        self.clear_screen()
+        print(self.history)
+
+class WordleGameAnalyzer:
+     def __init__(self):
+       pass  
+
+def WordlePlayer(WordleGame):
+    def __init__(self, name):
+        self.name = name
+        self.player_logs = []
+
+    def add_word(self):
+        return input()
+
+class WordleGame(GameRender):
 
     def __init__(self):
+        super().__init__()
         self.words = self.__read_words()
         self.answer = random.choice(self.words)
         self.score_pools = self.__initialize_scores_for_words()
@@ -18,6 +72,18 @@ class WordleGame():
         with open('words.txt') as f:
             words = f.read().splitlines()
         return words
+
+    def label_letter_from_input(self, input):
+        for index, character in enumerate(input):
+            list_of_occurences = self.__find_occurrences(
+                self.answer, character)
+            if index in list_of_occurences:
+                labeled_letter = {"color": "g", "letter": character}
+            elif len(list_of_occurences) > 0:
+                labeled_letter = {"color": "y", "letter": character}
+            else:
+                labeled_letter = {"color": "w", "letter": character}
+            self.add_letter_to_render(labeled_letter)
 
     def calculate_score(self, word: str):
         # count if
@@ -29,17 +95,13 @@ class WordleGame():
                 self.answer, character)
             multiplier = len(list_of_occurences)
             if multiplier == 0:
-                print(Fore.WHITE + character, end=" ")
                 continue
             # count scores
             if index in list_of_occurences:
                 current_score += multiplier*point_for_ok_letter
                 current_score += point_for_ok_placement
-                print(Fore.GREEN + character, end=" ")
             else:
                 current_score += multiplier*point_for_ok_letter
-                print(Fore.YELLOW + character, end=" ")
-
         return current_score
 
     def __find_occurrences(self, s, ch):
@@ -57,28 +119,21 @@ class WordleGame():
     def get_list_of_scores(self):
         print(self.score_pools.keys())
 
-
-def WordlePlayer(WordleGame):
-    def __init__(self, name):
-        self.name = name
-
-    def add_word(self):
-        return input()
-
-
-def check_if_words_exists(input):
-    pass
-
-
+#todo add main game loop
 def wordle_game_loop():
     wordle_instance = WordleGame()
     print('answer:' + wordle_instance.answer)
+
     while True:
-        print('\nstart typing\n')
+        print(Fore.WHITE + "Your input:", end=' ')
         x = input()
-        score = wordle_instance.calculate_score(x)
+        score = wordle_instance.calculate_score(x)  # data sent to renderer
+        #print(score)
+        wordle_instance.label_letter_from_input(x)
+        wordle_instance.render_word()
+        wordle_instance.print_history()
         if(score == 10):
-            print("win")
+            print('WIN')
             break
 
 
